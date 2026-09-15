@@ -150,12 +150,18 @@ abstract class BaseLayer implements DrawingContent, BaseKeyframeAnimation.Animat
   @CallSuper @Override public void getBounds(RectF outBounds, Matrix parentMatrix) {
     boundsMatrix.set(parentMatrix);
     boundsMatrix.preConcat(transform.getMatrix());
+    if (L.DBG) {
+      Log.d(L.TAG, "Updated bounds matrix for " + layerModel.getName() + " to " + boundsMatrix);
+    }
   }
 
   @SuppressLint("WrongConstant") @Override
   public void draw(Canvas canvas, Matrix parentMatrix, int parentAlpha) {
     L.beginSection(drawTraceName);
     if (!visible) {
+      if (L.DBG) {
+        Log.d(L.TAG, "Skipping draw for invisible layer " + layerModel.getName());
+      }
       L.endSection(drawTraceName);
       return;
     }
@@ -169,8 +175,15 @@ abstract class BaseLayer implements DrawingContent, BaseKeyframeAnimation.Animat
     L.endSection("Layer#parentMatrix");
     int alpha = (int)
         ((parentAlpha / 255f * (float) transform.getOpacity().getValue() / 100f) * 255);
+    if (L.DBG) {
+      Log.d(L.TAG, "Computed transform for " + layerModel.getName() + ": alpha=" + alpha +
+          ", opacity=" + transform.getOpacity().getValue() + ", matrix=" + matrix);
+    }
     if (!hasMatteOnThisLayer() && !hasMasksOnThisLayer()) {
       matrix.preConcat(transform.getMatrix());
+      if (L.DBG) {
+        Log.d(L.TAG, "Drawing layer " + layerModel.getName() + " (no matte/mask)");
+      }
       L.beginSection("Layer#drawLayer");
       drawLayer(canvas, matrix, alpha);
       L.endSection("Layer#drawLayer");
@@ -188,6 +201,9 @@ abstract class BaseLayer implements DrawingContent, BaseKeyframeAnimation.Animat
 
     rect.set(0, 0, canvas.getWidth(), canvas.getHeight());
     L.endSection("Layer#computeBounds");
+    if (L.DBG) {
+      Log.d(L.TAG, "Bounds for " + layerModel.getName() + " with matte/mask: " + rect);
+    }
 
     L.beginSection("Layer#saveLayer");
     canvas.saveLayer(rect, contentPaint, Canvas.ALL_SAVE_FLAG);
@@ -195,6 +211,10 @@ abstract class BaseLayer implements DrawingContent, BaseKeyframeAnimation.Animat
 
     // Clear the off screen buffer. This is necessary for some phones.
     clearCanvas(canvas);
+    if (L.DBG) {
+      Log.d(L.TAG, "Drawing layer " + layerModel.getName() + " (matte=" +
+          hasMatteOnThisLayer() + ", mask=" + hasMasksOnThisLayer() + ")");
+    }
     L.beginSection("Layer#drawLayer");
     drawLayer(canvas, matrix, alpha);
     L.endSection("Layer#drawLayer");
