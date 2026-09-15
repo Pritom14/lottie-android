@@ -81,20 +81,30 @@ import java.util.Map;
 
   public LottieAnimationView(Context context) {
     super(context);
+    if (L.DBG) {
+      Log.d(TAG, "Constructed LottieAnimationView(Context)");
+    }
     init(null);
   }
 
   public LottieAnimationView(Context context, AttributeSet attrs) {
     super(context, attrs);
+    if (L.DBG) {
+      Log.d(TAG, "Constructed LottieAnimationView(Context, AttributeSet)");
+    }
     init(attrs);
   }
 
   public LottieAnimationView(Context context, AttributeSet attrs, int defStyleAttr) {
     super(context, attrs, defStyleAttr);
+    if (L.DBG) {
+      Log.d(TAG, "Constructed LottieAnimationView(Context, AttributeSet, int)");
+    }
     init(attrs);
   }
 
   private void init(@Nullable AttributeSet attrs) {
+    long startTimeNs = System.nanoTime();
     TypedArray ta = getContext().obtainStyledAttributes(attrs, R.styleable.LottieAnimationView);
     int cacheStrategy = ta.getInt(
         R.styleable.LottieAnimationView_lottie_cacheStrategy,
@@ -132,6 +142,11 @@ import java.util.Map;
     }
 
     enableOrDisableHardwareLayer();
+
+    if (L.DBG) {
+      float durationMs = (System.nanoTime() - startTimeNs) / 1000000f;
+      Log.d(TAG, "init() took " + durationMs + " ms");
+    }
   }
 
   @Override public void setImageResource(int resId) {
@@ -202,6 +217,9 @@ import java.util.Map;
   }
 
   @Override protected Parcelable onSaveInstanceState() {
+    if (L.DBG) {
+      Log.d(TAG, "onSaveInstanceState");
+    }
     Parcelable superState = super.onSaveInstanceState();
     SavedState ss = new SavedState(superState);
     ss.animationName = animationName;
@@ -218,6 +236,9 @@ import java.util.Map;
       return;
     }
 
+    if (L.DBG) {
+      Log.d(TAG, "onRestoreInstanceState");
+    }
     SavedState ss = (SavedState) state;
     super.onRestoreInstanceState(ss.getSuperState());
     this.animationName = ss.animationName;
@@ -234,12 +255,18 @@ import java.util.Map;
 
   @Override protected void onAttachedToWindow() {
     super.onAttachedToWindow();
+    if (L.DBG) {
+      Log.d(TAG, "onAttachedToWindow");
+    }
     if (autoPlay && wasAnimatingWhenDetached) {
       playAnimation();
     }
   }
 
   @Override protected void onDetachedFromWindow() {
+    if (L.DBG) {
+      Log.d(TAG, "onDetachedFromWindow");
+    }
     if (isAnimating()) {
       cancelAnimation();
       wasAnimatingWhenDetached = true;
@@ -327,15 +354,24 @@ import java.util.Map;
    * and deserialized. {@link CacheStrategy#Weak} will hold a weak reference to said composition.
    */
   public void setAnimation(final String animationName, final CacheStrategy cacheStrategy) {
+    if (L.DBG) {
+      Log.d(TAG, "setAnimation: " + animationName + " cacheStrategy=" + cacheStrategy);
+    }
     this.animationName = animationName;
     if (WEAK_REF_CACHE.containsKey(animationName)) {
       WeakReference<LottieComposition> compRef = WEAK_REF_CACHE.get(animationName);
       LottieComposition ref = compRef.get();
       if (ref != null) {
+        if (L.DBG) {
+          Log.d(TAG, "setAnimation: found " + animationName + " in weak ref cache");
+        }
         setComposition(ref);
         return;
       }
     } else if (STRONG_REF_CACHE.containsKey(animationName)) {
+      if (L.DBG) {
+        Log.d(TAG, "setAnimation: found " + animationName + " in strong ref cache");
+      }
       setComposition(STRONG_REF_CACHE.get(animationName));
       return;
     }
@@ -343,9 +379,14 @@ import java.util.Map;
     this.animationName = animationName;
     lottieDrawable.cancelAnimation();
     cancelLoaderTask();
+    final long loadStartTimeNs = System.nanoTime();
     compositionLoader = LottieComposition.Factory.fromAssetFileName(getContext(), animationName,
         new OnCompositionLoadedListener() {
           @Override public void onCompositionLoaded(LottieComposition composition) {
+            if (L.DBG) {
+              float loadDurationMs = (System.nanoTime() - loadStartTimeNs) / 1000000f;
+              Log.d(TAG, "setAnimation: loaded " + animationName + " in " + loadDurationMs + " ms");
+            }
             if (cacheStrategy == CacheStrategy.Strong) {
               STRONG_REF_CACHE.put(animationName, composition);
             } else if (cacheStrategy == CacheStrategy.Weak) {
@@ -365,6 +406,9 @@ import java.util.Map;
    * bodymovin json from the network and pass it directly here.
    */
   public void setAnimation(final JSONObject json) {
+    if (L.DBG) {
+      Log.d(TAG, "setAnimation: loading from JSONObject");
+    }
     cancelLoaderTask();
     compositionLoader = LottieComposition.Factory.fromJson(getResources(), json, loadedListener);
   }
@@ -385,6 +429,7 @@ import java.util.Map;
     if (L.DBG) {
       Log.v(TAG, "Set Composition \n" + composition);
     }
+    long startTimeNs = System.nanoTime();
     lottieDrawable.setCallback(this);
 
     boolean isNewComposition = lottieDrawable.setComposition(composition);
@@ -392,6 +437,9 @@ import java.util.Map;
     if (!isNewComposition) {
       // We can avoid re-setting the drawable, and invalidating the view, since the composition
       // hasn't changed.
+      if (L.DBG) {
+        Log.d(TAG, "setComposition: composition unchanged, skipping drawable update");
+      }
       return;
     }
 
@@ -403,6 +451,11 @@ import java.util.Map;
     this.composition = composition;
 
     requestLayout();
+
+    if (L.DBG) {
+      float durationMs = (System.nanoTime() - startTimeNs) / 1000000f;
+      Log.d(TAG, "setComposition: applied new composition in " + durationMs + " ms");
+    }
   }
 
   /**
@@ -444,11 +497,17 @@ import java.util.Map;
   }
 
   public void playAnimation() {
+    if (L.DBG) {
+      Log.d(TAG, "playAnimation");
+    }
     lottieDrawable.playAnimation();
     enableOrDisableHardwareLayer();
   }
 
   public void resumeAnimation() {
+    if (L.DBG) {
+      Log.d(TAG, "resumeAnimation");
+    }
     lottieDrawable.resumeAnimation();
     enableOrDisableHardwareLayer();
   }
@@ -463,6 +522,9 @@ import java.util.Map;
   }
 
   public void reverseAnimation() {
+    if (L.DBG) {
+      Log.d(TAG, "reverseAnimation");
+    }
     lottieDrawable.reverseAnimation();
     enableOrDisableHardwareLayer();
   }
@@ -492,6 +554,9 @@ import java.util.Map;
   }
 
   public void resumeReverseAnimation() {
+    if (L.DBG) {
+      Log.d(TAG, "resumeReverseAnimation");
+    }
     lottieDrawable.resumeReverseAnimation();
     enableOrDisableHardwareLayer();
   }
@@ -574,11 +639,17 @@ import java.util.Map;
   }
 
   public void cancelAnimation() {
+    if (L.DBG) {
+      Log.d(TAG, "cancelAnimation");
+    }
     lottieDrawable.cancelAnimation();
     enableOrDisableHardwareLayer();
   }
 
   public void pauseAnimation() {
+    if (L.DBG) {
+      Log.d(TAG, "pauseAnimation");
+    }
     float progress = getProgress();
     lottieDrawable.cancelAnimation();
     setProgress(progress);
