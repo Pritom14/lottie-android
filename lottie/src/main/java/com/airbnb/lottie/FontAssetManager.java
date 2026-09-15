@@ -30,6 +30,7 @@ class FontAssetManager {
     }
 
     assetManager = ((View) callback).getContext().getAssets();
+    Log.d(L.TAG, "FontAssetManager initialized with delegate=" + (delegate != null));
   }
 
   void setDelegate(@Nullable FontAssetDelegate assetDelegate) {
@@ -51,37 +52,47 @@ class FontAssetManager {
     tempPair.set(fontFamily, style);
     Typeface typeface = fontMap.get(tempPair);
     if (typeface != null) {
+      Log.d(L.TAG, "Resolved typeface from cache for " + fontFamily + " " + style);
       return typeface;
     }
+    Log.d(L.TAG, "Resolving typeface for " + fontFamily + " " + style);
     Typeface typefaceWithDefaultStyle = getFontFamily(fontFamily);
     typeface = typefaceForStyle(typefaceWithDefaultStyle, style);
     fontMap.put(tempPair, typeface);
+    Log.d(L.TAG, "Registered typeface for " + fontFamily + " " + style);
     return typeface;
   }
 
   private Typeface getFontFamily(String fontFamily) {
     Typeface defaultTypeface = fontFamilies.get(fontFamily);
     if (defaultTypeface != null) {
+      Log.d(L.TAG, "Found font family " + fontFamily + " in cache");
       return defaultTypeface;
     }
 
     Typeface typeface = null;
     if (delegate != null) {
       typeface = delegate.fetchFont(fontFamily);
+      if (typeface != null) {
+        Log.d(L.TAG, "Fetched typeface for " + fontFamily + " from delegate");
+      }
     }
 
     if (delegate != null && typeface == null) {
       String path = delegate.getFontPath(fontFamily);
       if (path != null) {
+        Log.d(L.TAG, "Loading font " + fontFamily + " from delegate path " + path);
         typeface = Typeface.createFromAsset(assetManager, path);
       }
     }
 
     if (typeface == null) {
       String path = "fonts/" + fontFamily + defaultFontFileExtension;
+      Log.d(L.TAG, "Loading font " + fontFamily + " from assets path " + path);
       typeface = Typeface.createFromAsset(assetManager, path);
     }
 
+    Log.d(L.TAG, "Registering typeface for font family " + fontFamily);
     fontFamilies.put(fontFamily, typeface);
     return typeface;
   }
@@ -99,9 +110,11 @@ class FontAssetManager {
     }
 
     if (typeface.getStyle() == styleInt) {
+      Log.d(L.TAG, "Typeface already matches style " + style);
       return typeface;
     }
 
+    Log.d(L.TAG, "Creating typeface variant for style " + style);
     return Typeface.create(typeface, styleInt);
   }
 }
