@@ -19,6 +19,7 @@ import java.util.Collections;
 import java.util.List;
 
 abstract class BaseLayer implements DrawingContent, BaseKeyframeAnimation.AnimationListener {
+  private static final String TAG = BaseLayer.class.getSimpleName();
   private static final int SAVE_FLAGS = Canvas.CLIP_SAVE_FLAG | Canvas.CLIP_TO_LAYER_SAVE_FLAG |
       Canvas.MATRIX_SAVE_FLAG;
 
@@ -88,6 +89,10 @@ abstract class BaseLayer implements DrawingContent, BaseKeyframeAnimation.Animat
 
     if (layerModel.getMasks() != null && !layerModel.getMasks().isEmpty()) {
       this.mask = new MaskKeyframeAnimation(layerModel.getMasks());
+      if (L.DBG) {
+        Log.d(TAG, layerModel.getName() + ": initialized " + layerModel.getMasks().size() +
+            " mask(s)");
+      }
       for (BaseKeyframeAnimation<?, Path> animation : mask.getMaskAnimations()) {
         addAnimation(animation);
         animation.addUpdateListener(this);
@@ -200,6 +205,9 @@ abstract class BaseLayer implements DrawingContent, BaseKeyframeAnimation.Animat
     L.endSection("Layer#drawLayer");
 
     if (hasMasksOnThisLayer()) {
+      if (L.DBG) {
+        Log.d(TAG, layerModel.getName() + ": rendering with mask");
+      }
       applyMasks(canvas, matrix);
     }
 
@@ -312,12 +320,20 @@ abstract class BaseLayer implements DrawingContent, BaseKeyframeAnimation.Animat
 
     //noinspection ConstantConditions
     int size = mask.getMasks().size();
+    if (L.DBG) {
+      Log.d(TAG, layerModel.getName() + ": applying " + size + " mask(s)");
+    }
     for (int i = 0; i < size; i++) {
       Mask mask = this.mask.getMasks().get(i);
       BaseKeyframeAnimation<?, Path> maskAnimation = this.mask.getMaskAnimations().get(i);
       Path maskPath = maskAnimation.getValue();
       path.set(maskPath);
       path.transform(matrix);
+      if (L.DBG) {
+        path.computeBounds(tempMaskBoundsRect, false);
+        Log.d(TAG, layerModel.getName() + ": mask " + i + " path updated, mode=" +
+            mask.getMaskMode() + " bounds=" + tempMaskBoundsRect);
+      }
 
       switch (mask.getMaskMode()) {
         case MaskModeSubtract:
