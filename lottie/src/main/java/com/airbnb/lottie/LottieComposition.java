@@ -238,6 +238,9 @@ public class LottieComposition {
 
     @SuppressWarnings("WeakerAccess")
     static LottieComposition fromJsonSync(Resources res, JSONObject json) {
+      if (L.DBG) {
+        Log.d(L.TAG, "Parsing composition JSON.");
+      }
       Rect bounds = null;
       float scale = res.getDisplayMetrics().density;
       int width = json.optInt("w", -1);
@@ -265,6 +268,11 @@ public class LottieComposition {
       parseFonts(json.optJSONObject("fonts"), composition);
       parseChars(json.optJSONArray("chars"), composition);
       parseLayers(json, composition);
+      if (L.DBG) {
+        Log.d(L.TAG, "Composition loaded. " + composition.layers.size() + " layers, " +
+            composition.images.size() + " images, " + composition.precomps.size() +
+            " precomps, " + composition.fonts.size() + " fonts.");
+      }
       return composition;
     }
 
@@ -281,6 +289,10 @@ public class LottieComposition {
       int imageCount = 0;
       for (int i = 0; i < length; i++) {
         Layer layer = Layer.Factory.newInstance(jsonLayers.optJSONObject(i), composition);
+        if (L.DBG) {
+          Log.d(L.TAG, "Initialized layer " + layer.getName() + " (id=" + layer.getId() + ", " +
+              "type=" + layer.getLayerType() + ").");
+        }
         if (layer.getLayerType() == Layer.LayerType.Image) {
           imageCount++;
         }
@@ -315,6 +327,9 @@ public class LottieComposition {
         }
         String id = assetJson.optString("id");
         composition.precomps.put(id, layers);
+        if (L.DBG) {
+          Log.d(L.TAG, "Loaded precomp asset " + id + " with " + layers.size() + " layers.");
+        }
       }
     }
 
@@ -331,6 +346,9 @@ public class LottieComposition {
         }
         LottieImageAsset image = LottieImageAsset.Factory.newInstance(assetJson);
         composition.images.put(image.getId(), image);
+        if (L.DBG) {
+          Log.d(L.TAG, "Loaded image asset " + image.getId() + " (" + image.getFileName() + ").");
+        }
       }
     }
 
@@ -346,6 +364,9 @@ public class LottieComposition {
       for (int i = 0; i < length; i++) {
         Font font = Font.Factory.newInstance(fontsList.optJSONObject(i));
         composition.fonts.put(font.getName(), font);
+        if (L.DBG) {
+          Log.d(L.TAG, "Loaded font " + font.getName() + ".");
+        }
       }
     }
 
@@ -359,6 +380,9 @@ public class LottieComposition {
         FontCharacter character =
             FontCharacter.Factory.newInstance(charsJson.optJSONObject(i), composition);
         composition.characters.put(character.hashCode(), character);
+      }
+      if (L.DBG) {
+        Log.d(L.TAG, "Loaded " + length + " font characters.");
       }
     }
 
