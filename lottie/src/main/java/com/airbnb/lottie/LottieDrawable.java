@@ -62,6 +62,7 @@ import java.util.Set;
   private boolean performanceTrackingEnabled;
 
   public LottieDrawable() {
+    Log.d(TAG, "Initializing LottieDrawable.");
     animator.setRepeatCount(0);
     animator.setInterpolator(new LinearInterpolator());
     animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
@@ -153,6 +154,7 @@ import java.util.Set;
     if (this.composition == composition) {
       return false;
     }
+    Log.d(TAG, "Setting composition.");
 
     clearComposition();
     this.composition = composition;
@@ -204,6 +206,7 @@ import java.util.Set;
   }
 
   private void clearComposition() {
+    Log.d(TAG, "Clearing composition.");
     recycleBitmaps();
     compositionLayer = null;
     imageAssetManager = null;
@@ -368,6 +371,7 @@ import java.util.Set;
       });
       return;
     }
+    Log.d(TAG, "Starting animation.");
     long playTime = setStartTime ? (long) (progress * animator.getDuration()) : 0;
     animator.start();
     if (setStartTime) {
@@ -414,6 +418,7 @@ import java.util.Set;
       });
       return;
     }
+    Log.d(TAG, "Starting reverse animation.");
     if (setStartTime) {
       animator.setCurrentPlayTime((long) (progress * animator.getDuration()));
     }
@@ -550,6 +555,7 @@ import java.util.Set;
   }
 
   public void cancelAnimation() {
+    Log.d(TAG, "Canceling animation.");
     lazyCompositionTasks.clear();
     animator.cancel();
   }
