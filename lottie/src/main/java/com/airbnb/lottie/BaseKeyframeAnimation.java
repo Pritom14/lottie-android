@@ -2,6 +2,7 @@ package com.airbnb.lottie;
 
 import android.support.annotation.FloatRange;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,6 +12,8 @@ import java.util.List;
  * @param <A> Animation type
  */
 abstract class BaseKeyframeAnimation<K, A> {
+  private static final String TAG = BaseKeyframeAnimation.class.getSimpleName();
+
   interface AnimationListener {
     void onValueChanged();
   }
@@ -46,6 +49,9 @@ abstract class BaseKeyframeAnimation<K, A> {
     if (progress == this.progress) {
       return;
     }
+    if (L.DBG) {
+      Log.d(TAG, "setProgress " + this.progress + " -> " + progress);
+    }
     this.progress = progress;
 
     for (int i = 0; i < listeners.size(); i++) {
@@ -73,6 +79,10 @@ abstract class BaseKeyframeAnimation<K, A> {
       keyframe = keyframes.get(i);
       i++;
     }
+    if (L.DBG && keyframe != cachedKeyframe) {
+      Log.d(TAG, "Keyframe transition to [" + keyframe.getStartProgress() + ", " +
+          keyframe.getEndProgress() + "] at progress " + progress);
+    }
     cachedKeyframe = keyframe;
     return keyframe;
   }
@@ -93,7 +103,12 @@ abstract class BaseKeyframeAnimation<K, A> {
     float progressIntoFrame = progress - keyframe.getStartProgress();
     float keyframeProgress = keyframe.getEndProgress() - keyframe.getStartProgress();
     //noinspection ConstantConditions
-    return keyframe.interpolator.getInterpolation(progressIntoFrame / keyframeProgress);
+    float interpolatedProgress = keyframe.interpolator.getInterpolation(progressIntoFrame / keyframeProgress);
+    if (L.DBG) {
+      Log.d(TAG, "Interpolated progress " + progressIntoFrame + "/" + keyframeProgress +
+          " -> " + interpolatedProgress);
+    }
+    return interpolatedProgress;
   }
 
   @FloatRange(from = 0f, to = 1f)
