@@ -1,5 +1,7 @@
 package com.airbnb.lottie;
 
+import android.util.Log;
+
 import org.json.JSONObject;
 
 /**
@@ -7,6 +9,8 @@ import org.json.JSONObject;
  */
 @SuppressWarnings("WeakerAccess")
 public class LottieImageAsset {
+  private static final String TAG = L.TAG;
+
   private final int width;
   private final int height;
   private final String id;
@@ -17,6 +21,9 @@ public class LottieImageAsset {
     this.height = height;
     this.id = id;
     this.fileName = fileName;
+    if (L.DBG) {
+      Log.d(TAG, "Bound image asset " + id + " to resource " + fileName + " (" + width + "x" + height + ")");
+    }
   }
 
   static class Factory {
@@ -24,8 +31,14 @@ public class LottieImageAsset {
     }
 
     static LottieImageAsset newInstance(JSONObject imageJson) {
-      return new LottieImageAsset(imageJson.optInt("w"), imageJson.optInt("h"), imageJson.optString("id"),
-          imageJson.optString("p"));
+      int width = imageJson.optInt("w");
+      int height = imageJson.optInt("h");
+      String id = imageJson.optString("id");
+      String fileName = imageJson.optString("p");
+      if (L.DBG) {
+        Log.d(TAG, "Loading image asset " + id + " (" + fileName + ") " + width + "x" + height);
+      }
+      return new LottieImageAsset(width, height, id, fileName);
     }
   }
 
@@ -42,6 +55,9 @@ public class LottieImageAsset {
   }
 
   public String getFileName() {
+    if (L.DBG) {
+      Log.d(TAG, "Resolving bitmap cache key for image asset " + id + " -> " + fileName);
+    }
     return fileName;
   }
 }
