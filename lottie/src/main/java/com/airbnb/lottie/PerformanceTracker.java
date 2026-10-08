@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class PerformanceTracker {
+  private static final String TAG = PerformanceTracker.class.getSimpleName();
 
   public interface FrameListener {
     void onFrameRendered(float renderTimeMs);
@@ -36,6 +37,7 @@ public class PerformanceTracker {
   };
 
   void setEnabled(boolean enabled) {
+    Log.d(TAG, "setEnabled: " + enabled);
     this.enabled = enabled;
   }
 
@@ -43,6 +45,7 @@ public class PerformanceTracker {
     if (!enabled) {
       return;
     }
+    Log.d(TAG, "recordRenderTime: layer=" + layerName + " millis=" + millis);
     MeanCalculator meanCalculator = layerRenderTimes.get(layerName);
     if (meanCalculator == null) {
       meanCalculator = new MeanCalculator();
