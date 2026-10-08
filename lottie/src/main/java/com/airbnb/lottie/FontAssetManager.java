@@ -79,6 +79,7 @@ class FontAssetManager {
 
     if (typeface == null) {
       String path = "fonts/" + fontFamily + defaultFontFileExtension;
+      Log.d(L.TAG, "Loading font " + fontFamily + " from assets at " + path);
       typeface = Typeface.createFromAsset(assetManager, path);
     }
 
