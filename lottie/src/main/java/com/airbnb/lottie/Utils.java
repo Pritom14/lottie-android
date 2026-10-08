@@ -7,6 +7,7 @@ import android.graphics.PathMeasure;
 import android.graphics.PointF;
 import android.support.annotation.Nullable;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.WindowManager;
 
 import java.io.Closeable;
@@ -22,32 +23,39 @@ final class Utils {
   private Utils() {}
 
   static Path createPath(PointF startPoint, PointF endPoint, PointF cp1, PointF cp2) {
+    Log.d(L.TAG, "createPath");
     Path path = new Path();
     path.moveTo(startPoint.x, startPoint.y);
 
     if (cp1 != null  && cp2 != null && (cp1.length() != 0 || cp2.length() != 0)) {
+      Log.d(L.TAG, "createPath: using cubicTo");
       path.cubicTo(
           startPoint.x + cp1.x, startPoint.y + cp1.y,
           endPoint.x + cp2.x, endPoint.y + cp2.y,
           endPoint.x, endPoint.y);
     } else {
+      Log.d(L.TAG, "createPath: using lineTo");
       path.lineTo(endPoint.x, endPoint.y);
     }
     return path;
   }
 
   static void closeQuietly(Closeable closeable) {
+    Log.d(L.TAG, "closeQuietly");
     if (closeable != null) {
       try {
         closeable.close();
       } catch (RuntimeException rethrown) {
+        Log.d(L.TAG, "closeQuietly: rethrowing RuntimeException", rethrown);
         throw rethrown;
       } catch (Exception ignored) {
+        Log.d(L.TAG, "closeQuietly: ignoring exception", ignored);
       }
     }
   }
 
   static int getScreenWidth(Context context) {
+    Log.d(L.TAG, "getScreenWidth");
     if (displayMetrics == null) {
       displayMetrics = new DisplayMetrics();
     }
@@ -57,6 +65,7 @@ final class Utils {
   }
 
   static int getScreenHeight(Context context) {
+    Log.d(L.TAG, "getScreenHeight");
     if (displayMetrics == null) {
       displayMetrics = new DisplayMetrics();
     }
@@ -66,6 +75,7 @@ final class Utils {
   }
 
   static float getScale(Matrix matrix) {
+    Log.d(L.TAG, "getScale");
     points[0] = 0;
     points[1] = 0;
     // Use sqrt(2) so that the hypotenuse is of length 1.
@@ -80,7 +90,9 @@ final class Utils {
   }
 
   static void applyTrimPathIfNeeded(Path path, @Nullable TrimPathContent trimPath) {
+    Log.d(L.TAG, "applyTrimPathIfNeeded(TrimPathContent)");
     if (trimPath == null) {
+      Log.d(L.TAG, "applyTrimPathIfNeeded: trimPath is null, skipping");
       return;
     }
     applyTrimPathIfNeeded(path, trimPath.getStart().getValue() / 100f,
@@ -90,14 +102,19 @@ final class Utils {
   static void applyTrimPathIfNeeded(
       Path path, float startValue, float endValue, float offsetValue) {
     L.beginSection("applyTrimPathIfNeeded");
+    Log.d(L.TAG, "applyTrimPathIfNeeded: start=" + startValue + " end=" + endValue +
+        " offset=" + offsetValue);
     pathMeasure.setPath(path, false);
 
     float length = pathMeasure.getLength();
     if (startValue == 1f && endValue == 0f) {
+      Log.d(L.TAG, "applyTrimPathIfNeeded: start=1 and end=0, returning path unmodified");
       L.endSection("applyTrimPathIfNeeded");
       return;
     }
     if (length < 1f || Math.abs(endValue - startValue - 1) < .01) {
+      Log.d(L.TAG, "applyTrimPathIfNeeded: length too short or trim covers full path, " +
+          "returning path unmodified");
       L.endSection("applyTrimPathIfNeeded");
       return;
     }
@@ -125,6 +142,7 @@ final class Utils {
 
     // If the start and end are equals, return an empty path.
     if (newStart == newEnd) {
+      Log.d(L.TAG, "applyTrimPathIfNeeded: newStart == newEnd, resetting to empty path");
       path.reset();
       L.endSection("applyTrimPathIfNeeded");
       return;
@@ -164,6 +182,7 @@ final class Utils {
 
   @SuppressWarnings("SameParameterValue")
   static boolean isAtLeastVersion(LottieComposition composition, int major, int minor, int patch) {
+    Log.d(L.TAG, "isAtLeastVersion: comparing against " + major + "." + minor + "." + patch);
     if (composition.getMajorVersion() < major) {
       return false;
     } else if (composition.getMajorVersion() > major) {
